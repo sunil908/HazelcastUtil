@@ -26,7 +26,7 @@ The only command supported right now is
 # -setConfig
 
 Expects a json file with specified hazelcast cluster configuration. This is a optional parameter, meaning it will locate a local cluster 
-(localhost) if nothing specified.
+(localhost) if nothing specified. You may also give local path to the json config. Format is given above.
 
 # -destroyAllMaps :
 
