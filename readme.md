@@ -10,11 +10,13 @@ java -jar HazelcastUtil-final.jar -setConfig  hazelcastConfig.json -destroyAllMa
 Parameters 
 
 -setConfig : Refers to JSON filename containing below cluster details
+
                          {"clustername":"MY CLUSTER NAME",
                           "clusterpassword":"MY CLUSTER PASSWORD",
                           "clustertoken":"MY CLUSTER TOKEN",
                           "discoveryurl":"MY DISCOVERY URL"
                          }
+                         
 -destroyAllMaps : Destroys all the maps in Hazelcast cluster
 -clearAllMaps : Clears cache all the maps in Hazelcast cluster
 
