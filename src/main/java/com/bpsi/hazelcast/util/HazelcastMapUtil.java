@@ -1,18 +1,12 @@
 package com.bpsi.hazelcast.util;
 
-import com.hazelcast.client.HazelcastClient;
-import com.hazelcast.client.config.ClientConfig;
-import com.hazelcast.client.spi.impl.discovery.HazelcastCloudDiscovery;
-import com.hazelcast.client.spi.properties.ClientProperty;
-import com.hazelcast.config.GroupConfig;
+import com.bpsi.hazelcast.client.HazelcastClientExtension;
+
 import com.hazelcast.core.DistributedObject;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -20,56 +14,11 @@ import java.util.Collection;
 import java.util.List;
 
 import org.json.JSONException;
-import org.json.JSONObject;
+
 
 public class HazelcastMapUtil {
 	
-	static HazelcastInstance hazelClientInstance;
-	
-	public static void setHazelInstance(HazelcastInstance hazelcastInstance) {
-		hazelClientInstance = hazelcastInstance;
-	}
-	
-	public static void setHazelInstance() {
-		hazelClientInstance = HazelcastClient.newHazelcastClient();
-	}
-	
-	
-	public static void setHazelInstance(JSONObject jsonConfig) {
-		ClientConfig config = new ClientConfig();
-        
-		System.out.println("Entering the json config file....");
-        
-        String clusterpassword = jsonConfig.getString("clusterpassword");
-        String clustername = jsonConfig.getString("clustername");
-        String clustertoken = jsonConfig.getString("clustertoken");
-        String discoveryurl = jsonConfig.getString("discoveryurl");
-        
-        System.out.println("clustername: "+clustername);
-        System.out.println("clusterpassword: "+clusterpassword);
-        System.out.println("clustertoken: " + clustertoken);
-        System.out.println("discoveryurl: "+ discoveryurl);
-        
-		config.setGroupConfig(new GroupConfig(jsonConfig.getString("clustername"),jsonConfig.getString("clusterpassword")));
-        config.setProperty("hazelcast.client.statistics.enabled","true");
-        config.setProperty(ClientProperty.HAZELCAST_CLOUD_DISCOVERY_TOKEN.getName(), jsonConfig.getString("clustertoken"));
-        config.setProperty(HazelcastCloudDiscovery.CLOUD_URL_BASE_PROPERTY.getName(), jsonConfig.getString("discoveryurl"));
-        
-        hazelClientInstance = HazelcastClient.newHazelcastClient(config);
-
-	}
-	
-	
-	public static void setHazelInstance(String clusterName, String clusterPassword, String clusterToken, String DiscoveryURL) {
-		ClientConfig config = new ClientConfig();
-        config.setGroupConfig(new GroupConfig(clusterName,clusterPassword));
-        config.setProperty("hazelcast.client.statistics.enabled","true");
-        config.setProperty(ClientProperty.HAZELCAST_CLOUD_DISCOVERY_TOKEN.getName(), clusterToken);
-        config.setProperty(HazelcastCloudDiscovery.CLOUD_URL_BASE_PROPERTY.getName(), DiscoveryURL);
-        
-        hazelClientInstance = HazelcastClient.newHazelcastClient(config);
-
-	}
+	private static HazelcastInstance hazelClientInstance;
 	
 	public static void clearAllMap() {
 		
@@ -120,9 +69,12 @@ public class HazelcastMapUtil {
 		}
 	}
 	
+	
+	
+	
 	public static void printUsage() {
 		System.out.println("USAGE :");
-		System.out.println("-setConfig : Refers to JSON filename containing below cluster details");
+		System.out.println("-setJSONConfig : Refers to JSON filename containing below cluster details");
 		System.out.println("			 {\"clustername\":\"MY CLUSTER NAME\",");
 		System.out.println("			  \"clusterpassword\":\"MY CLUSTER PASSWORD\",");
 		System.out.println("			  \"clustertoken\":\"MY CLUSTER TOKEN\",");
@@ -152,40 +104,17 @@ public class HazelcastMapUtil {
 		}
 	}
 	
-	public static JSONObject parseJSONFile(String filename)  {
-        //System.out.println("Data...\n" + content );
-
-		try { String content = null; 
-				try {
-		    		Path path = Paths.get(filename);
-		            content = new String(Files.readAllBytes(path));
-		        }
-		        catch (IOException e) {
-		        	System.out.println("Error: Unable to open file. Check your file and location is correct.");
-		        	exitCommandLine(-3);
-		        }
-				return new JSONObject(content);
-		}
-        catch (JSONException e) {
-        	System.out.println("Error: Unable to open JSON file. Check your configurations.");
-        	exitCommandLine(-3);
-        }
-		return null;
-    }
-	
     public static void main(String[] args) {
-    		
-    		
     		
     		List<String> list = Arrays.asList(args);
     		List<String> argList = new ArrayList<String>();
     		
     		argList.add("-destroyAllMaps");
     		argList.add("-clearAllMaps");
-    		argList.add("-setConfig");
+    		argList.add("-setJSONConfig");
     		
-    		int setConfigIndex = list.indexOf("-setConfig");
-    		System.out.println("Set config index: "+setConfigIndex);
+    		int setJSONConfigIndex = list.indexOf("-setJSONConfig");
+    		System.out.println("Set config index: "+setJSONConfigIndex);
     		
     		/*
     		for(String argStr: list) {
@@ -198,17 +127,23 @@ public class HazelcastMapUtil {
     			}
     		} */
     		
-    		
-    				
     		if (list.size()==0) {
     			exitCommandLine(-1);
     		}
 
-    		if (setConfigIndex != -1 ) {
-    			setHazelInstance(parseJSONFile(list.get(setConfigIndex+1)));
+    		if (setJSONConfigIndex != -1 ) {
+    			try {
+    			 hazelClientInstance = HazelcastClientExtension.createHazelClient(list.get(setJSONConfigIndex+1));
+    			}
+    			catch(IOException e) {
+    				exitCommandLine(-3);
+    			}
+    			catch(JSONException e) {
+    				exitCommandLine(-3);
+    			}
     		}
     		else {
-    			HazelcastMapUtil.setHazelInstance();
+    			hazelClientInstance = HazelcastClientExtension.createHazelClient();;
     		}
 
     		if (list.contains("-clearAllMaps")) {
